@@ -16,6 +16,7 @@ import android.content.Context
 import android.graphics.Color
 import android.view.View
 import android.widget.Button
+import com.example.harishkumar.smartshop.usersession.UserSession
 
 
 class WelcomeActivity : AppCompatActivity() {
@@ -27,40 +28,14 @@ class WelcomeActivity : AppCompatActivity() {
     private var layouts: IntArray? = null
     private var btnSkip: Button? = null
     private var btnNext: Button? = null
-    private var prefManager: PrefManager? = null
+    private var prefManager: UserSession? = null
 
-    //  viewpager change listener
-    internal var viewPagerPageChangeListener: ViewPager.OnPageChangeListener = object : ViewPager.OnPageChangeListener {
-
-        override fun onPageSelected(position: Int) {
-            addBottomDots(position)
-
-            // changing the next button text 'NEXT' / 'GOT IT'
-            if (position == layouts!!.size - 1) {
-                // last page. make button text to GOT IT
-                btnNext!!.setText(getString(R.string.start))
-                btnSkip!!.setVisibility(View.GONE)
-            } else {
-                // still pages are left
-                btnNext!!.setText(getString(R.string.next))
-                btnSkip!!.setVisibility(View.VISIBLE)
-            }
-        }
-
-        override fun onPageScrolled(arg0: Int, arg1: Float, arg2: Int) {
-
-        }
-
-        override fun onPageScrollStateChanged(arg0: Int) {
-
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // Checking for first time launch - before calling setContentView()
-        prefManager = PrefManager(this)
+        prefManager = UserSession(this)
         if (!prefManager!!.isFirstTimeLaunch) {
             launchHomeScreen()
             finish()
@@ -141,7 +116,7 @@ class WelcomeActivity : AppCompatActivity() {
 
     private fun launchHomeScreen() {
         prefManager!!.isFirstTimeLaunch = false
-        startActivity(Intent(this@WelcomeActivity, MainActivity::class.java))
+        startActivity(Intent(this@WelcomeActivity, LoginActivity::class.java))
         finish()
     }
 
@@ -153,6 +128,33 @@ class WelcomeActivity : AppCompatActivity() {
             val window = window
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
             window.statusBarColor = Color.TRANSPARENT
+        }
+    }
+
+    //  viewpager change listener
+    internal var viewPagerPageChangeListener: ViewPager.OnPageChangeListener = object : ViewPager.OnPageChangeListener {
+
+        override fun onPageSelected(position: Int) {
+            addBottomDots(position)
+
+            // changing the next button text 'NEXT' / 'GOT IT'
+            if (position == layouts!!.size - 1) {
+                // last page. make button text to GOT IT
+                btnNext!!.setText(getString(R.string.start))
+                btnSkip!!.setVisibility(View.GONE)
+            } else {
+                // still pages are left
+                btnNext!!.setText(getString(R.string.next))
+                btnSkip!!.setVisibility(View.VISIBLE)
+            }
+        }
+
+        override fun onPageScrolled(arg0: Int, arg1: Float, arg2: Int) {
+
+        }
+
+        override fun onPageScrollStateChanged(arg0: Int) {
+
         }
     }
 

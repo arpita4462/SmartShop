@@ -4,30 +4,38 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.content.Intent
 import android.os.Handler
-import android.support.v4.os.HandlerCompat.postDelayed
-
-
+import android.support.v4.content.res.ResourcesCompat
+import com.daimajia.androidanimations.library.Techniques
+import com.example.harishkumar.smartshop.usersession.UserSession
+import com.daimajia.androidanimations.library.YoYo
+import kotlinx.android.synthetic.main.splash_screen.*
 
 class SplashScreen : AppCompatActivity() {
 
     private val SPLASH_TIME_OUT:Long = 3000
-
+    private var session: UserSession? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.splash_screen)
-        Handler().postDelayed(Runnable /*
-             * Showing splash screen with a timer. This will be useful when you
-             * want to show case your app logo / company
-             */
 
-        {
-            // This method will be executed once the timer is over
-            // Start your app main activity
-            val i = Intent(this@SplashScreen, WelcomeActivity::class.java)
-            startActivity(i)
+        session = UserSession(this@SplashScreen)
 
-            // close this activity
+        val typeface = ResourcesCompat.getFont(this, R.font.blacklist)
+
+        appname_tv.setTypeface(typeface)
+
+        YoYo.with(Techniques.Bounce)
+                .duration(7000)
+                .playOn(findViewById(R.id.logo))
+
+        YoYo.with(Techniques.FadeInUp)
+                .duration(5000)
+                .playOn(findViewById(R.id.appname_tv))
+
+        Handler().postDelayed({
+            startActivity(Intent(this@SplashScreen, WelcomeActivity::class.java))
             finish()
         }, SPLASH_TIME_OUT)
     }
-}
+    }
+
