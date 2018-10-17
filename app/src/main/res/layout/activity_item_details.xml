@@ -5,9 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:weightSum="10"
-    tools:context="com.allandroidprojects.ecomsample.product.ItemDetailsActivity">
-
+    android:weightSum="10">
     <ScrollView
         android:id="@+id/scrollbar"
         android:layout_width="match_parent"
@@ -23,10 +21,11 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <com.facebook.drawee.view.SimpleDraweeView xmlns:fresco="http://schemas.android.com/apk/res-auto"
+            <com.facebook.drawee.view.SimpleDraweeView
+                xmlns:fresco="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/image1"
                 android:layout_width="match_parent"
-                android:layout_height="200.0dp"
+                android:layout_height="400dp"
                 fresco:placeholderImage="@color/stay_color" />
 
             <LinearLayout
@@ -175,6 +174,7 @@
                     android:weightSum="2">
 
                     <ImageView
+                        android:id="@+id/wishlist_icon"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:src="@drawable/ic_favorite_border_black_18dp" />

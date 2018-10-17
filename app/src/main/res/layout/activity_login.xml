@@ -34,6 +34,7 @@
                 android:layout_centerHorizontal="true"/>
 
             <com.github.florent37.materialtextfield.MaterialTextField
+                android:id="@+id/material_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
@@ -124,6 +125,7 @@
             </LinearLayout>
 
         </LinearLayout>
+
 
     </ScrollView>
 

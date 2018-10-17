@@ -2,9 +2,12 @@ package com.example.harishkumar.smartshop
 
 import android.app.Activity
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.graphics.Typeface
+import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Bundle
 import android.support.design.widget.Snackbar
@@ -20,6 +23,10 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import com.example.harishkumar.smartshop.Alert.NetworkStateReceiver
+import com.example.harishkumar.smartshop.Alert.ProgressDialog
+import com.example.harishkumar.smartshop.model.ApiReturn
+import com.example.harishkumar.smartshop.model.SignUpModel
 import kotlinx.android.synthetic.main.activity_register.*
 /*import com.android.volley.RequestQueue
 import com.android.volley.Response
@@ -36,14 +43,23 @@ import com.karumi.dexter.listener.multi.MultiplePermissionsListener*/
 
 import org.json.JSONException
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
+import retrofit2.converter.gson.GsonConverterFactory
 
 import java.io.ByteArrayOutputStream
 import java.io.FileNotFoundException
 import java.io.InputStream
 
 
+class Register : AppCompatActivity(), NetworkStateReceiver.NetworkStateReceiverListener {
 
-class Register : AppCompatActivity() {
+    private var networkStateReceiver: NetworkStateReceiver? = null
+
+    private var pDialog: ProgressDialog? = null
 
     private var edtname: EditText? = null
     private var edtemail: EditText? = null
@@ -55,19 +71,25 @@ class Register : AppCompatActivity() {
     private var email: String? = null
     private var password: String? = null
     private var mobile: String? = null
-    private var profile: String? = null
 
+    companion object {
+        val TAG = "MyTag"
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
-        //check Internet Connection
-//        CheckInternetConnection(this).checkConnection()
-
         val typeface = ResourcesCompat.getFont(this, R.font.blacklist)
         appname_tvreg.setTypeface(typeface)
+
+        //check Internet Connection
+        networkStateReceiver = NetworkStateReceiver()
+        networkStateReceiver!!.addListener(this)
+        this.registerReceiver(networkStateReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+
+        pDialog = ProgressDialog(this)
 
         edtname = findViewById(R.id.name)
         edtemail = findViewById(R.id.email)
@@ -82,11 +104,10 @@ class Register : AppCompatActivity() {
         edtnumber!!.addTextChangedListener(numberWatcher)
 
 
-
         //validate user details and register user
 
         register.setOnClickListener(View.OnClickListener {
-            //TODO AFTER VALDATION
+
             if (validateName() && validateEmail() && validatePass() && validateCnfPass() && validateNumber()) {
 
                 name = edtname!!.text.toString()
@@ -95,6 +116,10 @@ class Register : AppCompatActivity() {
                 mobile = edtnumber!!.text.toString()
 
                 //Validation Success
+//                val userRegister = SignUpModel(email!!, name!!, mobile!!, password!!, check!!)
+//                saveUserDetail(userRegister)
+                Toast.makeText(applicationContext, "Registration Successful", Toast.LENGTH_LONG).show()
+
             }
         })
 
@@ -109,7 +134,6 @@ class Register : AppCompatActivity() {
 
         forgot_pass.setOnClickListener {
             startActivity(Intent(this@Register, ForgotPassword::class.java))
-            finish()
         }
 
 
@@ -129,6 +153,7 @@ class Register : AppCompatActivity() {
         override fun afterTextChanged(s: Editable) {
 
             check = s.toString()
+            edtname!!.requestFocus()
 
             if (check!!.length < 4 || check!!.length > 20) {
                 edtname!!.error = "Name Must consist of 4 to 20 characters"
@@ -151,6 +176,7 @@ class Register : AppCompatActivity() {
         override fun afterTextChanged(s: Editable) {
 
             check = s.toString()
+            edtemail!!.requestFocus()
 
             if (check!!.length < 4 || check!!.length > 40) {
                 edtemail!!.error = "Email Must consist of 4 to 20 characters"
@@ -178,6 +204,7 @@ class Register : AppCompatActivity() {
         override fun afterTextChanged(s: Editable) {
 
             check = s.toString()
+            edtpass!!.requestFocus()
 
             if (check!!.length < 4 || check!!.length > 20) {
                 edtpass!!.error = "Password Must consist of 4 to 20 characters"
@@ -202,6 +229,7 @@ class Register : AppCompatActivity() {
         override fun afterTextChanged(s: Editable) {
 
             check = s.toString()
+            edtcnfpass!!.requestFocus()
 
             if (check != edtpass!!.text.toString()) {
                 edtcnfpass!!.error = "Both the passwords do not match"
@@ -225,6 +253,7 @@ class Register : AppCompatActivity() {
         override fun afterTextChanged(s: Editable) {
 
             check = s.toString()
+            edtnumber!!.requestFocus()
 
             if (check!!.length > 10) {
                 edtnumber!!.error = "Number cannot be grated than 10 digits"
@@ -236,7 +265,78 @@ class Register : AppCompatActivity() {
     }
 
 
+//    save instance for screen rotation
+
+    override fun onSaveInstanceState(outState: Bundle?) {
+        outState!!.putString("KeyEmail", edtemail!!.text.toString())
+        outState.putString("KeyName", edtname!!.text.toString())
+        outState.putString("KeyPhone", edtnumber!!.text.toString())
+        outState.putString("KeyPass", edtpass!!.text.toString())
+        outState.putString("KeyConPass", edtcnfpass!!.text.toString())
+
+        super.onSaveInstanceState(outState)
+
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle?) {
+        super.onRestoreInstanceState(savedInstanceState)
+
+        email = savedInstanceState!!.getString("KeyEmail")
+        name = savedInstanceState.getString("KeyName")
+        mobile = savedInstanceState.getString("KeyPhone")
+        password = savedInstanceState.getString("KeyPass")
+//        edtcnfpass = savedInstanceState.getString("KeyConPass")
+
+    }
+
+    /*saving the data in Database*/
+    private fun saveUserDetail(users: SignUpModel) {
+
+        pDialog!!.show()
+        val requestBody = HashMap<String, SignUpModel>()
+        requestBody.put("data", users)
+        val retrofituser = Retrofit.Builder().addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .baseUrl(getString(R.string.base_url))
+                .build()
+        val apiServiceuser = retrofituser.create(ApiInterface::class.java)
+        val postUser = apiServiceuser.registration(requestBody)
+
+        postUser.enqueue(object : Callback<ApiReturn> {
+
+            override fun onFailure(call: Call<ApiReturn>, t: Throwable) {
+                pDialog!!.dismiss()
+                Toast.makeText(applicationContext, "Registration Error", Toast.LENGTH_LONG).show()
+            }
+
+            override fun onResponse(call: Call<ApiReturn>, response: Response<ApiReturn>) {
+
+                if (response.isSuccessful) {
+                    pDialog!!.dismiss()
+                    val singupintent = Intent(applicationContext, LoginActivity::class.java)
+                    singupintent.putExtra("user_email", email)
+                    singupintent.putExtra("user_password", password)
+                    Toast.makeText(applicationContext, "Verify your Email Address", Toast.LENGTH_LONG).show()
+                    startActivity(singupintent)
+                    finish()
+                } else {
+                    if (response.code() == 422) {
+                        pDialog!!.dismiss()
+                        Toast.makeText(applicationContext, "Email-Id already exist", Toast.LENGTH_LONG).show()
+                    } else {
+                        pDialog!!.dismiss()
+                        Toast.makeText(applicationContext, "Registration Error", Toast.LENGTH_LONG).show()
+                    }
+                }
+
+            }
+
+        })
+    }
+
+    /*Validation of Fields*/
     private fun validateNumber(): Boolean {
+        edtnumber!!.requestFocus()
 
         check = edtnumber!!.text.toString()
         Log.e("inside number", check!!.length.toString() + " ")
@@ -249,6 +349,7 @@ class Register : AppCompatActivity() {
     }
 
     private fun validateCnfPass(): Boolean {
+        edtcnfpass!!.requestFocus()
 
         check = edtcnfpass!!.text.toString()
 
@@ -257,6 +358,7 @@ class Register : AppCompatActivity() {
 
     private fun validatePass(): Boolean {
 
+        edtpass!!.requestFocus()
 
         check = edtpass!!.text.toString()
 
@@ -269,6 +371,7 @@ class Register : AppCompatActivity() {
     }
 
     private fun validateEmail(): Boolean {
+        edtemail!!.requestFocus()
 
         check = edtemail!!.text.toString()
 
@@ -284,25 +387,54 @@ class Register : AppCompatActivity() {
     }
 
     private fun validateName(): Boolean {
+        edtname!!.requestFocus()
 
         check = edtname!!.text.toString()
-
         return !(check!!.length < 4 || check!!.length > 20)
 
     }
 
+
     override fun onResume() {
         super.onResume()
-        //check Internet Connection
-//        CheckInternetConnection(this).checkConnection()
+        networkStateReceiver = NetworkStateReceiver()
+        networkStateReceiver!!.addListener(this)
+        this.registerReceiver(networkStateReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
     }
 
     override fun onStop() {
         super.onStop()
     }
 
-    companion object {
-        val TAG = "MyTag"
+    /*Checking Internet Connection and Showing Message*/
+    private fun showSnack(isConnected: String) {
+        val message: String
+        val color: Int
+        if (isConnected.equals("true")) {
+
+        } else {
+            message = getString(R.string.sorry_nointernet)
+            color = Color.RED
+            val snackbar = Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
+            val sbView = snackbar.view
+            val textView = sbView.findViewById<View>(android.support.design.R.id.snackbar_text) as TextView
+            textView.setTextColor(color)
+            snackbar.show()
+        }
+    }
+
+    override fun networkAvailable() {
+        showSnack("true")
+    }
+
+    override fun networkUnavailable() {
+        showSnack("false")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        networkStateReceiver!!.removeListener(this)
+        this.unregisterReceiver(networkStateReceiver)
     }
 }
 

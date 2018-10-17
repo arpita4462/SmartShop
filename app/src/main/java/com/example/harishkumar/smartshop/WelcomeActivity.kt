@@ -36,6 +36,7 @@ class WelcomeActivity : AppCompatActivity() {
 
         // Checking for first time launch - before calling setContentView()
         prefManager = UserSession(this)
+
         if (!prefManager!!.isFirstTimeLaunch) {
             launchHomeScreen()
             finish()

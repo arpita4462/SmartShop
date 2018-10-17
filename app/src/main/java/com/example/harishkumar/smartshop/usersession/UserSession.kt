@@ -16,33 +16,49 @@ class UserSession(internal var context: Context) {
     internal var editor: SharedPreferences.Editor
     internal var PRIVATE_MODE = 0
 
+    companion object {
+
+        private val PREF_NAME = "UserSessionPref"
+        internal val FIRST_TIME = "firsttime"
+        private val USER_IS_LOGIN = "IsLoggedIn"
+
+        val USER_ID = "UserId"
+        val USER_TOKEN = "UserToken"
+
+        val IS_FIRST_TIME_LAUNCH = "IsFirstTimeLaunch"
+
+//        val ADD_TOCART="0"
+
+    }
+
+    init {
+        pref = context.getSharedPreferences(PREF_NAME, PRIVATE_MODE)
+        editor = pref.edit()
+    }
+
     val userDetails: HashMap<String, String>
         get() {
             val user = HashMap<String, String>()
-            user[KEY_NAME] = pref.getString(KEY_NAME, null)
-            user[KEY_EMAIL] = pref.getString(KEY_EMAIL, null)
-            user[KEY_MOBiLE] = pref.getString(KEY_MOBiLE, null)
-            user[KEY_PHOTO] = pref.getString(KEY_PHOTO, null)
+            user[USER_ID] = pref.getString(USER_ID, "null")
+            user[USER_TOKEN] = pref.getString(USER_TOKEN, "null")
             return user
         }
 
     // Get Login State
     val isLoggedIn: Boolean
-        get() = pref.getBoolean(IS_LOGIN, false)
+        get() = pref.getBoolean(USER_IS_LOGIN, false)
 
-    var cartValue: Int
-        get() = pref.getInt(KEY_CART, 0)
-        set(count) {
-            editor.putInt(KEY_CART, count)
-            editor.commit()
-        }
 
-    var wishlistValue: Int
-        get() = pref.getInt(KEY_WISHLIST, 0)
-        set(count) {
-            editor.putInt(KEY_WISHLIST, count)
-            editor.commit()
-        }
+   /* //Get Cart Value
+    fun getCartValue(): Int {
+        return pref.getInt(ADD_TOCART, 0)
+    }
+
+    fun setCartValue(count: Int) {
+        editor.putInt(ADD_TOCART, count)
+        editor.commit()
+    }*/
+
 
     var firstTime: Boolean?
         get() = pref.getBoolean(FIRST_TIME, true)
@@ -58,30 +74,15 @@ class UserSession(internal var context: Context) {
             editor.commit()
         }
 
-    init {
-        pref = context.getSharedPreferences(PREF_NAME, PRIVATE_MODE)
-        editor = pref.edit()
-    }
 
-    /**
-     * Create login session
-     */
-    fun createLoginSession(name: String, email: String, mobile: String, photo: String) {
-        editor.putBoolean(IS_LOGIN, true)
-        editor.putString(KEY_NAME, name)
-        editor.putString(KEY_EMAIL, email)
-        editor.putString(KEY_MOBiLE, mobile)
-        editor.putString(KEY_PHOTO, photo)
+    fun createLoginSession(UserId: String, UserToken: String) {
+        editor.putBoolean(USER_IS_LOGIN, true)
+        editor.putString(USER_ID, UserId)
+        editor.putString(USER_TOKEN, UserToken)
         editor.commit()
     }
 
-    /**
-     * Check login method wil check user login status
-     * If false it will redirect user to login page
-     * Else won't do anything
-     */
     fun checkLogin() {
-        // Check login status
         if (!this.isLoggedIn) {
             val i = Intent(context, LoginActivity::class.java)
             // Closing all the Activities
@@ -94,11 +95,8 @@ class UserSession(internal var context: Context) {
 
     }
 
-    /**
-     * Clear session details
-     */
     fun logoutUser() {
-        editor.putBoolean(IS_LOGIN, false)
+        editor.clear()
         editor.commit()
         val i = Intent(context, LoginActivity::class.java)
         i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -106,65 +104,19 @@ class UserSession(internal var context: Context) {
         context.startActivity(i)
     }
 
+    /*//Add to card -> increase or decrese
 
     fun increaseCartValue() {
-        val `val` = cartValue + 1
-        editor.putInt(KEY_CART, `val`)
+        val increase = getCartValue() + 1
+        editor.putInt(ADD_TOCART, increase)
         editor.commit()
-        Log.e("Cart Value PE", "Var value : " + `val` + "Cart Value :" + cartValue + " ")
-    }
-
-    fun increaseWishlistValue() {
-        val `val` = wishlistValue + 1
-        editor.putInt(KEY_WISHLIST, `val`)
-        editor.commit()
-        Log.e("Cart Value PE", "Var value : " + `val` + "Cart Value :" + cartValue + " ")
+        Log.e("Cart Value PE", "Var value : " + increase + "Cart Value :" + getCartValue() + " ")
     }
 
     fun decreaseCartValue() {
-        val `val` = cartValue - 1
-        editor.putInt(KEY_CART, `val`)
+        val decrease = getCartValue() - 1
+        editor.putInt(ADD_TOCART, decrease)
         editor.commit()
-        Log.e("Cart Value PE", "Var value : " + `val` + "Cart Value :" + cartValue + " ")
-    }
-
-    fun decreaseWishlistValue() {
-        val `val` = wishlistValue - 1
-        editor.putInt(KEY_WISHLIST, `val`)
-        editor.commit()
-        Log.e("Cart Value PE", "Var value : " + `val` + "Cart Value :" + cartValue + " ")
-    }
-
-    companion object {
-
-        // Sharedpref file name
-        private val PREF_NAME = "UserSessionPref"
-
-        // First time logic Check
-        internal val FIRST_TIME = "firsttime"
-
-        // All Shared Preferences Keys
-        private val IS_LOGIN = "IsLoggedIn"
-
-        // User name (make variable public to access from outside)
-        val KEY_NAME = "name"
-
-        // Email address (make variable public to access from outside)
-        val KEY_EMAIL = "email"
-
-        // Mobile number (make variable public to access from outside)
-        val KEY_MOBiLE = "mobile"
-
-        // user avatar (make variable public to access from outside)
-        val KEY_PHOTO = "photo"
-
-        // number of items in our cart
-        val KEY_CART = "cartvalue"
-
-        // number of items in our wishlist
-        val KEY_WISHLIST = "wishlistvalue"
-
-        // check first time app launch
-        val IS_FIRST_TIME_LAUNCH = "IsFirstTimeLaunch"
-    }
+        Log.e("Cart Value PE", "Var value : " + decrease + "Cart Value :" + getCartValue() + " ")
+    }*/
 }

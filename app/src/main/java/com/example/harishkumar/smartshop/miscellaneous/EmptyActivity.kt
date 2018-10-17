@@ -2,6 +2,7 @@ package com.example.harishkumar.smartshop.miscellaneous
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import com.example.harishkumar.smartshop.R
 
 
 class EmptyActivity : AppCompatActivity() {

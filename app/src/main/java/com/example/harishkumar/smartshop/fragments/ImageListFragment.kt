@@ -13,11 +13,21 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import com.example.harishkumar.smartshop.MainActivity
+import com.example.harishkumar.smartshop.R
+import com.example.harishkumar.smartshop.adapter.SimpleStringRecyclerViewAdapter
+import com.example.harishkumar.smartshop.product.ItemDetailsActivity
 import com.example.harishkumar.smartshop.utility.ImageUrlUtils
 import com.facebook.drawee.view.SimpleDraweeView
 
 
 class ImageListFragment : Fragment() {
+
+    companion object {
+
+        val STRING_IMAGE_URI = "ImageUri"
+        val STRING_IMAGE_POSITION = "ImagePosition"
+        var mActivity: MainActivity? = null
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,94 +52,26 @@ class ImageListFragment : Fragment() {
             layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
             recyclerView.setLayoutManager(layoutManager);
         }*/
+//        val imageUrlUtils = ImageUrlUtils()
         var items: Array<String>? = null
-    /*    if (this@ImageListFragment.arguments!!.getInt("type") == 1) {
-            items = ImageUrlUtils.getOffersUrls()
+        if (this@ImageListFragment.arguments!!.getInt("type") == 1) {
+            items = ImageUrlUtils.offersUrls
         } else if (this@ImageListFragment.arguments!!.getInt("type") == 2) {
-            items = ImageUrlUtils.getElectronicsUrls()
+            items = ImageUrlUtils.electronicsUrls
         } else if (this@ImageListFragment.arguments!!.getInt("type") == 3) {
-            items = ImageUrlUtils.getLifeStyleUrls()
+            items = ImageUrlUtils.lifeStyleUrls
         } else if (this@ImageListFragment.arguments!!.getInt("type") == 4) {
-            items = ImageUrlUtils.getHomeApplianceUrls()
+            items = ImageUrlUtils.homeApplianceUrls
         } else if (this@ImageListFragment.arguments!!.getInt("type") == 5) {
-            items = ImageUrlUtils.getBooksUrls()
+            items = ImageUrlUtils.booksUrls
         } else {
-            items = ImageUrlUtils.getImageUrls()
-        }*/
+            items = ImageUrlUtils.imageUrls
+        }
         val layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
         recyclerView.layoutManager = layoutManager
         recyclerView.adapter = SimpleStringRecyclerViewAdapter(recyclerView, items!!)
     }
 
-    class SimpleStringRecyclerViewAdapter(private val mRecyclerView: RecyclerView, private val mValues: Array<String>) : RecyclerView.Adapter<SimpleStringRecyclerViewAdapter.ViewHolder>() {
 
-        class ViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
-            val mImageView: SimpleDraweeView
-            val mLayoutItem: LinearLayout
-            val mImageViewWishlist: ImageView
 
-            init {
-                mImageView = mView.findViewById(R.id.image1) as SimpleDraweeView
-                mLayoutItem = mView.findViewById(R.id.layout_item) as LinearLayout
-                mImageViewWishlist = mView.findViewById(R.id.ic_wishlist) as ImageView
-            }
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.list_item, parent, false)
-            return ViewHolder(view)
-        }
-
-        override fun onViewRecycled(holder: ViewHolder) {
-            if (holder.mImageView.getController() != null) {
-                holder.mImageView!!.getController()!!.onDetach()
-            }
-            if (holder.mImageView.getTopLevelDrawable() != null) {
-                holder.mImageView!!.getTopLevelDrawable()!!.setCallback(null)
-                //                ((BitmapDrawable) holder.mImageView.getTopLevelDrawable()).getBitmap().recycle();
-            }
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            /* FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) holder.mImageView.getLayoutParams();
-            if (mRecyclerView.getLayoutManager() instanceof GridLayoutManager) {
-                layoutParams.height = 200;
-            } else if (mRecyclerView.getLayoutManager() instanceof StaggeredGridLayoutManager) {
-                layoutParams.height = 600;
-            } else {
-                layoutParams.height = 800;
-            }*/
-            val uri = Uri.parse(mValues[position])
-            holder.mImageView.setImageURI(uri)
-/*
-            holder.mLayoutItem.setOnClickListener {
-                val intent = Intent(mActivity, ItemDetailsActivity::class.java)
-                intent.putExtra(STRING_IMAGE_URI, mValues[position])
-                intent.putExtra(STRING_IMAGE_POSITION, position)
-                mActivity!!.startActivity(intent)
-            }
-*/
-
-            //Set click action for wishlist
-            holder.mImageViewWishlist.setOnClickListener {
-                val imageUrlUtils = ImageUrlUtils()
-                imageUrlUtils.addWishlistImageUri(mValues[position])
-                holder.mImageViewWishlist.setImageResource(R.drawable.ic_favorite_black_18dp)
-                notifyDataSetChanged()
-                Toast.makeText(mActivity, "Item added to wishlist.", Toast.LENGTH_SHORT).show()
-            }
-
-        }
-
-        override fun getItemCount(): Int {
-            return mValues.size
-        }
-    }
-
-    companion object {
-
-        val STRING_IMAGE_URI = "ImageUri"
-        val STRING_IMAGE_POSITION = "ImagePosition"
-        private var mActivity: MainActivity? = null
-    }
 }

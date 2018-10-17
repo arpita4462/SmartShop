@@ -1,4 +1,4 @@
-package com.atrio.smartdeal.Alert
+package com.example.harishkumar.smartshop.Alert
 
 import android.app.AlertDialog
 import android.content.Context

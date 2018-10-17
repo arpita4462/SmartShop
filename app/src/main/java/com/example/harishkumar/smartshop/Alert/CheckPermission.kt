@@ -1,4 +1,4 @@
-package com.atrio.smartdeal
+package com.example.harishkumar.smartshop.Alert
 
 
 import android.Manifest
@@ -17,7 +17,11 @@ class CheckPermission{
    internal fun  ischeckandrequestPermission(appCompatActivity: AppCompatActivity):Boolean {
 
        val permissions = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION,
-               Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.GET_TASKS )
+               Manifest.permission.RECEIVE_BOOT_COMPLETED,
+               Manifest.permission.READ_EXTERNAL_STORAGE,
+               Manifest.permission.WRITE_EXTERNAL_STORAGE,
+               Manifest.permission.ACCESS_FINE_LOCATION,
+               Manifest.permission.GET_TASKS )
 
        val listPermissionNeeded= ArrayList<String>()
        for (permision in permissions){

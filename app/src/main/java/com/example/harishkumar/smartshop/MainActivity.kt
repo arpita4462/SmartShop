@@ -1,58 +1,140 @@
 package com.example.harishkumar.smartshop
 
+
+import android.content.Intent
+import android.content.IntentFilter
+import android.graphics.Color
+import android.net.ConnectivityManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.design.widget.NavigationView
+import android.support.design.widget.Snackbar
 import android.support.design.widget.TabLayout
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentManager
-import android.support.v4.app.FragmentPagerAdapter
+import android.support.v4.content.res.ResourcesCompat
 import android.support.v4.view.GravityCompat
 import android.support.v4.view.ViewPager
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.Toolbar
-import android.view.Menu
+import android.util.Log
 import android.view.MenuItem
+import android.view.View
+import android.widget.TextView
+import com.example.harishkumar.smartshop.Alert.NetworkStateReceiver
+import com.example.harishkumar.smartshop.Alert.ProgressDialog
+import com.example.harishkumar.smartshop.adapter.FragmentAdapter
 import com.example.harishkumar.smartshop.fragments.ImageListFragment
-import java.util.ArrayList
+import com.example.harishkumar.smartshop.fragments.LayoutMainFragment
+import com.example.harishkumar.smartshop.miscellaneous.EmptyActivity
+import com.example.harishkumar.smartshop.options.*
+import com.example.harishkumar.smartshop.usersession.UserSession
+import kotlinx.android.synthetic.main.activity_login.*
+import kotlinx.android.synthetic.main.app_bar_main.*
 
-class MainActivity : AppCompatActivity(),NavigationView.OnNavigationItemSelectedListener {
+class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, NetworkStateReceiver.NetworkStateReceiverListener{
 
 
-    var notificationCountCart = 0
-     var viewPager:ViewPager ?=null
-    var tabLayout:TabLayout ?=null
+    private var session: UserSession? = null
+    var user_token: String? = null
+    var user_id: String? = null
+
+    private var networkStateReceiver: NetworkStateReceiver? = null
+
+    private var pDialog: ProgressDialog? = null
+
+    var viewPager: ViewPager? = null
+    var tabLayout: TabLayout? = null
+
+
+    companion object {
+        //show count on cart in toolbar
+       var countAddToCart=0
+        fun getCartCount(){
+            print("No. of objects="+ countAddToCart)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        val typeface = ResourcesCompat.getFont(this, R.font.blacklist)
+        appname_tvmain.setTypeface(typeface)
+
+        //check Internet Connection
+        networkStateReceiver = NetworkStateReceiver()
+        networkStateReceiver!!.addListener(this)
+        this.registerReceiver(networkStateReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+
+        //shared prefenced
+        session = UserSession(applicationContext)
+        val loginuser: HashMap<String, String> = session!!.userDetails
+        user_id = loginuser.get(UserSession.USER_ID)
+        user_token = loginuser.get(UserSession.USER_TOKEN)
+
+        //check login
+        session!!.isLoggedIn
+
+        pDialog = ProgressDialog(this)
+
+        //setup toolbar
+        val toolbar = findViewById<Toolbar>(R.id.toolbar_main)
         setSupportActionBar(toolbar)
 
+        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+        supportActionBar!!.setDisplayShowHomeEnabled(true)
+
+        //set navigation drawer open or close
         val drawer = findViewById<DrawerLayout>(R.id.drawer_layout)
         val toggle = ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
         drawer.setDrawerListener(toggle)
         toggle.syncState()
 
+        //set view of navigation drawer
         val navigationView = findViewById<NavigationView>(R.id.nav_view)
         navigationView.setNavigationItemSelectedListener(this)
         viewPager = findViewById<ViewPager>(R.id.viewpager)
+        //tab layout with view pager
         tabLayout = findViewById<TabLayout>(R.id.tabs)
-        if (viewPager != null)
-        {
+        if (viewPager != null) {
             setupViewPager(viewPager!!)
             tabLayout!!.setupWithViewPager(viewPager)
         }
 
+        //get cart count from api and store it in countAddToCart
+
+        count_tv.text= countAddToCart.toString()
+        if(countAddToCart==0){
+            counterValuePanel.visibility=View.GONE
+        }else{
+            counterValuePanel.visibility=View.VISIBLE
+        }
+//        NotificationCountSetClass.setAddToCart(this@MainActivity, view_cart, countAddToCart)
+        Log.i("count_value", countAddToCart.toString())
+        view_cart.setOnClickListener(View.OnClickListener {
+            startActivity(Intent(this@MainActivity, CartListActivity::class.java))
+        })
+        view_search.setOnClickListener(View.OnClickListener {
+            startActivity(Intent(this@MainActivity, SearchResultActivity::class.java))
+        })
+        view_notify.setOnClickListener(View.OnClickListener {
+            startActivity(Intent(this@MainActivity, EmptyActivity::class.java))
+        })
 
     }
 
     private fun setupViewPager(viewPager: ViewPager) {
-        val adapter = Adapter(supportFragmentManager)
+
+        val adapter = FragmentAdapter(supportFragmentManager)
         var fragment = ImageListFragment()
+        var fragmenthome = LayoutMainFragment()
         var bundle = Bundle()
+
+        bundle.putInt("type", 0)
+//        fragment.arguments = bundle
+        adapter.addFragment(fragmenthome, getString(R.string.item_0))
+        fragmenthome = LayoutMainFragment()
+//        bundle = Bundle()
         bundle.putInt("type", 1)
         fragment.arguments = bundle
         adapter.addFragment(fragment, getString(R.string.item_1))
@@ -89,24 +171,41 @@ class MainActivity : AppCompatActivity(),NavigationView.OnNavigationItemSelected
         // Handle navigation view item clicks here.
         val id = item.itemId
 
-        if (id == R.id.nav_item1) {
+        if (id == R.id.nav_item0) {
             viewPager!!.currentItem = 0
-        } else if (id == R.id.nav_item2) {
+        } else if (id == R.id.nav_item1) {
             viewPager!!.currentItem = 1
-        } else if (id == R.id.nav_item3) {
+        } else if (id == R.id.nav_item2) {
             viewPager!!.currentItem = 2
-        } else if (id == R.id.nav_item4) {
+        } else if (id == R.id.nav_item3) {
             viewPager!!.currentItem = 3
-        } else if (id == R.id.nav_item5) {
+        } else if (id == R.id.nav_item4) {
             viewPager!!.currentItem = 4
-        } else if (id == R.id.nav_item6) {
+        } else if (id == R.id.nav_item5) {
             viewPager!!.currentItem = 5
-        } else if (id == R.id.my_wishlist) {
-//            startActivity(Intent(this@MainActivity, WishlistActivity::class.java))
+        } else if (id == R.id.nav_item6) {
+            viewPager!!.currentItem = 6
+        } else if (id == R.id.my_orders) {
+            startActivity(Intent(this@MainActivity, EmptyActivity::class.java))
         } else if (id == R.id.my_cart) {
-//            startActivity(Intent(this@MainActivity, CartListActivity::class.java))
+            startActivity(Intent(this@MainActivity, CartListActivity::class.java))
+        } else if (id == R.id.my_wishlist) {
+            startActivity(Intent(this@MainActivity, MyWishListActivity::class.java))
+        } else if (id == R.id.my_rewards) {
+            startActivity(Intent(this@MainActivity, EmptyActivity::class.java))
+        } else if (id == R.id.my_account) {
+            startActivity(Intent(this@MainActivity, MyProfileActivity::class.java))
+        } else if (id == R.id.terms_conditions) {
+            startActivity(Intent(this@MainActivity, TermsCondActivity::class.java))
+        } else if (id == R.id.privacy_policy) {
+            startActivity(Intent(this@MainActivity, PrivacyPolicyActivity::class.java))
+        } else if (id == R.id.contact_us) {
+            startActivity(Intent(this@MainActivity, ContactUsActivity::class.java))
+        } else if (id == R.id.log_out) {
+            session!!.logoutUser()
+            startActivity(Intent(this@MainActivity, LoginActivity::class.java))
         } else {
-//            startActivity(Intent(this@MainActivity, EmptyActivity::class.java))
+            startActivity(Intent(this@MainActivity, EmptyActivity::class.java))
         }
 
         val drawer = findViewById<DrawerLayout>(R.id.drawer_layout)
@@ -114,73 +213,16 @@ class MainActivity : AppCompatActivity(),NavigationView.OnNavigationItemSelected
         return true
     }
 
-    internal class Adapter(fm: FragmentManager) : FragmentPagerAdapter(fm) {
-        private val mFragments = ArrayList<Fragment>()
-        private val mFragmentTitles = ArrayList<String>()
-
-        fun addFragment(fragment: Fragment, title: String) {
-            mFragments.add(fragment)
-            mFragmentTitles.add(title)
-        }
-
-        override fun getItem(position: Int): Fragment {
-            return mFragments[position]
-        }
-
-        override fun getCount(): Int {
-            return mFragments.size
-        }
-
-        override fun getPageTitle(position: Int): CharSequence? {
-            return mFragmentTitles[position]
-        }
-    }
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.main, menu)
-        return true
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        // Get the notifications MenuItem and
-        // its LayerDrawable (layer-list)
-        val item = menu.findItem(R.id.action_cart)
-//        NotificationCountSetClass.setAddToCart(this@MainActivity, item, notificationCountCart)
-        // force the ActionBar to relayout its MenuItems.
-        // onCreateOptionsMenu(Menu) will be called again.
-        invalidateOptionsMenu()
-        return super.onPrepareOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        val id = item.itemId
-
-
-        if (id == R.id.action_search) {
-//            startActivity(Intent(this@MainActivity, SearchResultActivity::class.java))
-            return true
-        } else if (id == R.id.action_cart) {
-
-            /* NotificationCountSetClass.setAddToCart(MainActivity.this, item, notificationCount);
-            invalidateOptionsMenu();*/
-//            startActivity(Intent(this@MainActivity, CartListActivity::class.java))
-
-            /* notificationCount=0;//clear notification count
-            invalidateOptionsMenu();*/
-            return true
-        } else {
-//            startActivity(Intent(this@MainActivity, EmptyActivity::class.java))
-
-        }
-        return super.onOptionsItemSelected(item)
-    }
     override fun onResume() {
         super.onResume()
-        invalidateOptionsMenu()
+        count_tv.text= countAddToCart.toString()
+        if(countAddToCart==0){
+            counterValuePanel.visibility=View.GONE
+        }else{
+            counterValuePanel.visibility=View.VISIBLE
+        }
     }
+
 
     override fun onBackPressed() {
         val drawer = findViewById<DrawerLayout>(R.id.drawer_layout)
@@ -189,6 +231,37 @@ class MainActivity : AppCompatActivity(),NavigationView.OnNavigationItemSelected
         } else {
             super.onBackPressed()
         }
+    }
+
+    /*Checking Internet Connection and Showing Message*/
+    private fun showSnack(isConnected: String) {
+        val message: String
+        val color: Int
+        if (isConnected.equals("true")) {
+
+        } else {
+            message = getString(R.string.sorry_nointernet)
+            color = Color.RED
+            val snackbar = Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
+            val sbView = snackbar.view
+            val textView = sbView.findViewById<View>(android.support.design.R.id.snackbar_text) as TextView
+            textView.setTextColor(color)
+            snackbar.show()
+        }
+    }
+
+    override fun networkAvailable() {
+        showSnack("true")
+    }
+
+    override fun networkUnavailable() {
+        showSnack("false")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        networkStateReceiver!!.removeListener(this)
+        this.unregisterReceiver(networkStateReceiver)
     }
 
 }

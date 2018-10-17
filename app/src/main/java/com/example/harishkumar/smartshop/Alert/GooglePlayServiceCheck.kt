@@ -1,4 +1,4 @@
-package com.atrio.smartdeal
+package com.example.harishkumar.smartshop.Alert
 
 
 import android.support.v7.app.AppCompatActivity

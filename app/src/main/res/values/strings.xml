@@ -79,6 +79,7 @@
     <string name="action_cart">Cart</string>
     <string name="action_notifications">Notifications</string>
 
+    <string name="item_0">Home</string>
     <string name="item_1">Offers</string>
     <string name="item_2">Electronics</string>
     <string name="item_3">Lifestyle</string>
@@ -99,5 +100,17 @@
     <string name="help_center">Help Center</string>
 
     <string name="search_hint">Search for Products, Brands and More</string>
+    <string name="update_details">Update Details</string>
+
+    <string name="connect_internet">Connected to Internet</string>
+    <string name="sorry_nointernet">Sorry! Not connected to internet</string>
+    <string name="base_url">BASE URL OF API</string>
+    <string name="more">More</string>
+
+    <!--Contact Us-->
+    <string name="call_us_at">Call us at :</string>
+    <string name="contact_num">+91 9845184444</string>
+    <string name="email_us_at">Email us at :</string>
+    <string name="contact_email">info@gmediasolutions.in</string>
 
 </resources>
